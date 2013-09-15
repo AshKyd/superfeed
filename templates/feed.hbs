@@ -1,0 +1,31 @@
+{{#feed}}
+	<section>
+	<h2 class="ui header">
+		<i class="docs icon"></i>
+		<div class="content">
+			{{title}}
+			<div class="sub header">{{description}}</div>
+		</div>
+	</h2>
+	<a class="superfeeds action" data-action="deleteFeed" data-p1="{{../opts.url}}">Delete Feed</a>
+	<div class="ui divider"></div>
+	{{#entries}}
+		<article>
+			<h3><a href="{{link}}">{{title}}</a></h3>
+			<p class="time">{{publishedDate}}</p>
+			<div class="body">
+			{{#if content}}
+				{{{content}}}
+			{{else}}
+				{{{description}}}
+			{{/if}}
+			</div>
+		</article>
+		<div class="ui divider"></div>
+	{{/entries}}
+	{{^entries}}
+		<i class="massive cancel icon"></i>
+		<p>There are no items for this feed.</p>
+	{{/entries}}
+	</section>
+{{/feed}}

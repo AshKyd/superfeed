@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>SuperFeed</title>
+    <link rel="stylesheet" type="text/css" href="css/semantic.min.css">
+    <link rel="stylesheet" type="text/css" href="css/app.css">
+    <script type="text/javascript" src="javascript/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="javascript/semantic.min.js"></script>
+    <script type="text/javascript" src="javascript/app.dev.js"></script>
+</head>
+
+<body>
+    <div class="ui menu">
+        <a class="active item">
+            <i class="home icon"></i> Feeds
+        </a>
+        <a class="item showmodal" data-modal="#addfeed">
+            <i class="add icon"></i> Add Content
+        </a>
+
+        <div class="right menu">
+            <div class="borderless item" style="margin:0 .5em 0 0;padding:0;">
+                <div class="ui icon input">
+                    <input type="text" placeholder="Search&hellip;">
+                    <i class="search link icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui floaty">
+        <div class="sidebar">
+
+        </div>
+        <div class="feed content">
+
+        </div>
+    </div>
+
+    <div id="addfeed" class="ui modal">
+        <i class="close icon"></i>
+        <div class="header">
+            Add a feed
+        </div>
+        <div class="content">
+                <p>Add a feed by pasting the address here.</p>
+                <input type="text">
+        </div>
+        <div class="actions">
+            <a class="ui secondary button">Cancel</a>
+            <a class="ui primary button">OK</a>
+        </div>
+    </div>
+</body>
+
+</html>

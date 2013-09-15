@@ -1,0 +1,51 @@
+body{
+	font:caption;
+	margin:0;
+	padding:0;
+}
+
+.feed{
+	overflow-x:hidden;
+}
+.feed img{
+	max-width: 100%;
+	height:auto;
+}
+
+.floaty.ui > .feed{
+	position: absolute;
+	left: 280px;
+	right: 0;
+	bottom: 0;
+	overflow: auto;
+	top: 2.66em;
+
+	padding-top:;
+}
+
+.floaty.ui h2.ui.header{
+	margin-top:1rem;
+}
+
+.floaty.ui .sidebar{
+	position:absolute;
+	left:0;
+	top:2.66em;
+	bottom:0;
+	width:250px;
+	background:#f8f8f8;
+}
+
+.ui.modal > .content{
+	width:100%;
+	box-sizing:border-box;
+}
+
+code,
+pre{
+	overflow-x:auto;
+	max-width:100%;
+}
+pre{
+	margin:1rem;
+}
