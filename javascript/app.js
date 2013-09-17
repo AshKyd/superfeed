@@ -8,6 +8,8 @@ var SprFeed = function(opts){
 			feed : false
 		}
 	});
+	this.loadFromCache();
+	this.articleCurrent=0;
 }
 
 SprFeed.prototype = {
@@ -34,30 +36,102 @@ SprFeed.prototype = {
 
 		$.ajax(ajaxOpts);
 	},
-	load : function(callback){
+	loadFromCache : function(){
 		var _this = this;
-		if(_this.db.data.feed && _this.opts.onLoad){
+
+		if(_this.opts.cache !== false && _this.db.data.feed && _this.opts.onLoad){
 			_this.feed = _this.db.data.feed;
 			_this.opts.onLoad(_this);
 		}
-		this.getRemoteUrl(this.opts.url,function(data){
-			_this.feed = new JFeed(data);
-
-			for(var i=0;i<_this.feed.entries.length;i++){
-				_this.feed.entries[i].description = sanitiseHTMLFragmment(_this.feed.entries[i].description);
+	},
+	/**
+	 * Merge two feeds. f1 is the newer feed, t2 is the older
+	 * feed we want to merge in.
+	 */
+	_mergeEntries : function(f1,f2){
+		var f1StartLength = f1.length;
+		for(var j=0; j<f2.length; j++){
+			var append = true;
+			for(var i=0; i<f1StartLength; i++){
+				if(f1[i].id == f2[j].id){
+					// Extend the new version over the old version so we
+					// get any changes, but keep our toggled flags.
+					['read','fav'].forEach(function(prop){
+						f1[i][prop] = f2[i][prop];
+					});
+					append = false;
+					break;
+				}
 			}
-			_this.db.data.feed = _this.feed;
-			_this.db.save();
+			if(append){
+				f1.push(f2[j]);
+			}
+		}
+		return f1;
+	},
+	load : function(cache){
+		var _this = this;
+
+		var startTime = Date.now();
+		this.getRemoteUrl(this.opts.url,function(data){
+			var newFeed = new JFeed(data);
+
+			for(var i=0;i<newFeed.entries.length;i++){
+				newFeed.entries[i].description = sanitiseHTMLFragmment(newFeed.entries[i].description);
+			}
+
+			if(_this.feed && _this.feed.entries){
+				newFeed.entries = _this._mergeEntries(newFeed.entries,_this.feed.entries);
+			}
+
+			newFeed.updatetime = Date.now();
+			newFeed.updatelength = Date.now() - startTime;
+
+			// Apply the feed and save it.
+			_this.feed = newFeed;
+			_this.save();
 
 			_this.opts.onLoad && _this.opts.onLoad(_this);
 		})
+	},
+	save : function(){
+		this.db.data.feed = this.feed;
+		this.db.save();
 	},
 	getOverview : function(){
 		return {
 			title : this.feed.title,
 			link : this.feed.link,
-			feedurl : this.opts.url
+			feedurl : this.opts.url,
+			unread : this.getUnreadCount()
 		}
+	},
+	getUnreadCount : function(){
+		var count = 0;
+		for(var i=0;i<this.feed.entries.length;i++){
+			if(!newFeed.entries[i].read){
+				count++;
+			}
+		}
+		return count;
+	},
+	_getEntryByID : function(id){
+		for(var i=0; i<this.feed.entries.length; i++){
+			if(this.feed.entries[i].id == id){
+				return this.feed.entries[i];
+			}
+		}
+		return false;
+	},
+	toggleFlag : function(id,flag){
+		var entry = this._getEntryByID(id);
+		entry[flag] = !entry[flag];
+		this.save();
+	},
+	markRead : function(id){
+		var entry = this._getEntryByID(id);
+		entry.read = true;
+		this.save();
 	}
 };
 
@@ -106,27 +180,58 @@ SprFeeds.prototype = {
 	createFeed : function(url,callback){
 		var _this = this;
 		var newFeed = new SprFeed({
-			url : url
+			url : url,
+			onLoad : function(){
+				_this.db.data.feeds.push(newFeed.getOverview());
+				_this.db.save();
+				callback(newFeed);
+			}
 		});
-		newFeed.load(function(){
-			_this.db.data.feeds.push(newFeed.getOverview());
-			_this.db.save();
-			callback(newFeed);
-		})
+		newFeed.load();
+	},
+	updateFeeds : function(callback){
+		var _this = this;
+		var i = 0;
+		var update = function(){
+			console.log('updating feed ',i);
+			var thisFeed = new SprFeed({
+				url : _this.db.data.feeds[i].feedurl,
+				cache : false,
+				onLoad : function(feed){
+					i++;
+					if(i<_this.db.data.feeds.length){
+						update();
+					} else if(callback) {
+						callback();
+					}
+				}
+			});
+			thisFeed.load();
+		}
+		update();
 	},
 	loadFeed : function(url){
-		var feed = this._getFeedByUrl(url);
+		var _this = this;
+		var feed = _this._getFeedByUrl(url);
 		if(feed === false) return;
-		var thisFeed = new SprFeed({
-			url : this.db.data.feeds[feed].feedurl,
-			onLoad : function(){
-				$('.feed.content').empty().append(JST["templates/feed.hbs"](thisFeed));
-			},
-			onUpdate : function(){
 
+		var $feed = $('.feed.content')
+			.scrollTop(0);
+
+		var thisRef = _this.db.data.feeds[feed];
+		var thisFeed = new SprFeed({
+			url : thisRef.feedurl,
+			onLoad : function(feed){
+				$feed
+					.empty()
+					.append(JST["templates/feed.hbs"](feed));
+				thisRef.updatetime = feed.feed.updatetime;
+				thisRef.updatelength = feed.feed.updatelength;
+				_this.db.save();
 			}
 		});
 		thisFeed.load();
+		this.feed = thisFeed;
 	},
 	deleteFeed : function(url){
 		var feed = this._getFeedByUrl(url);
@@ -137,6 +242,7 @@ SprFeeds.prototype = {
 }
 
 window.onload = function(){
+	var animateSpeed = 100;
 	window.onresize();
 
 	var feeds = new SprFeeds();
@@ -160,6 +266,51 @@ window.onload = function(){
 		var p1 = $(this).data('p1');
 		feeds[action](p1);
 		return false;
+	});
+
+	$(document).on('click','.superfeed.action',function(){
+		var action = $(this).data('action');
+		var id = $(this).closest('.entry').data('id');
+		var p2 = $(this).data('p2');
+		feeds.feed[action](id,p2);
+		if($(this).hasClass('toggle')){
+			$(this).toggleClass('active');
+		}
+		return false;
+	});
+
+
+
+	Mousetrap.bind(['j','k'],function(e,key){
+
+		var articleCurrent = feeds.feed.articleCurrent;
+
+		feeds.feed.markRead($('.entries .entry').eq(articleCurrent).data('id'));
+
+		if(key == 'j'){
+			articleCurrent++;
+		} else {
+			articleCurrent--;
+		}
+
+		if(articleCurrent < 0) {
+			articleCurrent = 0;
+		}
+
+		if(articleCurrent >= $('.entries .entry').length) {
+			articleCurrent--;
+		}
+
+		var $newTarget = $('.entries .entry').eq(articleCurrent);
+		$('.feed').animate({
+			scrollTop : $newTarget.offset().top +
+				$('.feed').scrollTop() -
+				$('.feed').offset().top
+		},animateSpeed);
+		$newTarget.find('.read').addClass('active');
+		console.log('scrolling to ',$newTarget.find('h3').text(),articleCurrent);
+		feeds.feed.articleCurrent = articleCurrent;
+
 	});
 }
 

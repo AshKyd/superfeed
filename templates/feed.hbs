@@ -1,5 +1,5 @@
 {{#feed}}
-	<section>
+	<section class="entries">
 	<h2 class="ui header">
 		<i class="docs icon"></i>
 		<div class="content">
@@ -10,9 +10,21 @@
 	<a class="superfeeds action" data-action="deleteFeed" data-p1="{{../opts.url}}">Delete Feed</a>
 	<div class="ui divider"></div>
 	{{#entries}}
-		<article>
+		<article class="entry" data-id="{{id}}">
 			<h3><a href="{{link}}">{{title}}</a></h3>
-			<p class="time">{{publishedDate}}</p>
+			<div class="ui two column grid">
+				<div class="column">
+					<p class="time">{{publishedDate}}</p>
+				</div>
+				<div class="column">
+
+					<div class="ui buttons">
+						<a href="#" class="read ui button toggle {{#if read}}active{{/if}} superfeed action" data-action="toggleFlag" data-p2="read" ><i class="mail icon"></i></a>
+						<a href="#" class="favourite ui button toggle {{#if fav}}active{{/if}} superfeed action" data-action="toggleFlag" data-p2="fav"> <i class="like icon"></i></a>
+					</div>
+				</div>
+			</div>
+			
 			<div class="body">
 			{{#if content}}
 				{{{content}}}

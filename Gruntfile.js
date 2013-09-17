@@ -6,6 +6,7 @@ module.exports = function(grunt) {
                     "javascript/handlebars.runtime.js",
                     "javascript/templates.compiled.js",
                     "javascript/html-sanitiser.js",
+                    "javascript/mousetrap.js",
                     "javascript/jfeed/*.js",
                     "javascript/app.js"
                 ],

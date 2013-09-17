@@ -49,3 +49,7 @@ pre{
 pre{
 	margin:1rem;
 }
+
+.feed .two.column.grid .column + .column{
+	text-align:right;
+}

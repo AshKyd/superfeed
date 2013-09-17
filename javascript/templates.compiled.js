@@ -8,7 +8,7 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
 function program1(depth0,data,depth1) {
   
   var buffer = "", stack1, stack2, options;
-  buffer += "\n	<section>\n	<h2 class=\"ui header\">\n		<i class=\"docs icon\"></i>\n		<div class=\"content\">\n			";
+  buffer += "\n	<section class=\"entries\">\n	<h2 class=\"ui header\">\n		<i class=\"docs icon\"></i>\n		<div class=\"content\">\n			";
   if (stack1 = helpers.title) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
   else { stack1 = depth0.title; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
   buffer += escapeExpression(stack1)
@@ -25,7 +25,7 @@ function program1(depth0,data,depth1) {
   if (!helpers.entries) { stack2 = blockHelperMissing.call(depth0, stack2, options); }
   if(stack2 || stack2 === 0) { buffer += stack2; }
   buffer += "\n	";
-  options = {hash:{},inverse:self.program(7, program7, data),fn:self.noop,data:data};
+  options = {hash:{},inverse:self.program(9, program9, data),fn:self.noop,data:data};
   if (stack2 = helpers.entries) { stack2 = stack2.call(depth0, options); }
   else { stack2 = depth0.entries; stack2 = typeof stack2 === functionType ? stack2.apply(depth0) : stack2; }
   if (!helpers.entries) { stack2 = blockHelperMissing.call(depth0, stack2, options); }
@@ -36,7 +36,11 @@ function program1(depth0,data,depth1) {
 function program2(depth0,data) {
   
   var buffer = "", stack1;
-  buffer += "\n		<article>\n			<h3><a href=\"";
+  buffer += "\n		<article class=\"entry\" data-id=\"";
+  if (stack1 = helpers.id) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
+  else { stack1 = depth0.id; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
+  buffer += escapeExpression(stack1)
+    + "\">\n			<h3><a href=\"";
   if (stack1 = helpers.link) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
   else { stack1 = depth0.link; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
   buffer += escapeExpression(stack1)
@@ -44,17 +48,29 @@ function program2(depth0,data) {
   if (stack1 = helpers.title) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
   else { stack1 = depth0.title; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
   buffer += escapeExpression(stack1)
-    + "</a></h3>\n			<p class=\"time\">";
+    + "</a></h3>\n			<div class=\"ui two column grid\">\n				<div class=\"column\">\n					<p class=\"time\">";
   if (stack1 = helpers.publishedDate) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
   else { stack1 = depth0.publishedDate; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
   buffer += escapeExpression(stack1)
-    + "</p>\n			<div class=\"body\">\n			";
-  stack1 = helpers['if'].call(depth0, depth0.content, {hash:{},inverse:self.program(5, program5, data),fn:self.program(3, program3, data),data:data});
+    + "</p>\n				</div>\n				<div class=\"column\">\n\n					<div class=\"ui buttons\">\n						<a href=\"#\" class=\"read ui button toggle ";
+  stack1 = helpers['if'].call(depth0, depth0.read, {hash:{},inverse:self.noop,fn:self.program(3, program3, data),data:data});
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += " superfeed action\" data-action=\"toggleFlag\" data-p2=\"read\" ><i class=\"mail icon\"></i></a>\n						<a href=\"#\" class=\"favourite ui button toggle ";
+  stack1 = helpers['if'].call(depth0, depth0.fav, {hash:{},inverse:self.noop,fn:self.program(3, program3, data),data:data});
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += " superfeed action\" data-action=\"toggleFlag\" data-p2=\"fav\"> <i class=\"like icon\"></i></a>\n					</div>\n				</div>\n			</div>\n			\n			<div class=\"body\">\n			";
+  stack1 = helpers['if'].call(depth0, depth0.content, {hash:{},inverse:self.program(7, program7, data),fn:self.program(5, program5, data),data:data});
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n			</div>\n		</article>\n		<div class=\"ui divider\"></div>\n	";
   return buffer;
   }
 function program3(depth0,data) {
+  
+  
+  return "active";
+  }
+
+function program5(depth0,data) {
   
   var buffer = "", stack1;
   buffer += "\n				";
@@ -65,7 +81,7 @@ function program3(depth0,data) {
   return buffer;
   }
 
-function program5(depth0,data) {
+function program7(depth0,data) {
   
   var buffer = "", stack1;
   buffer += "\n				";
@@ -76,7 +92,7 @@ function program5(depth0,data) {
   return buffer;
   }
 
-function program7(depth0,data) {
+function program9(depth0,data) {
   
   
   return "\n		<i class=\"massive cancel icon\"></i>\n		<p>There are no items for this feed.</p>\n	";
