@@ -5,7 +5,7 @@ var SprFeed = function(opts){
 	this.db = new SprDb({
 		name : 'SprFeed'+opts.url,
 		schema : {
-			feed : false
+			feed : opts.defaults
 		}
 	});
 	this.loadFromCache();
@@ -108,6 +108,10 @@ SprFeed.prototype = {
 	},
 	getUnreadCount : function(){
 		var count = 0;
+		if(!this.feed.entries){
+			return count;
+		}
+
 		for(var i=0;i<this.feed.entries.length;i++){
 			if(!this.feed.entries[i].read){
 				count++;
@@ -183,23 +187,42 @@ SprFeeds.prototype = {
 		}
 		return false;
 	},
-	createFeed : function(url,callback){
+	createFeed : function(opts,callback){
 		var _this = this;
+
+		// If a configuration option hasn't been passed, assume
+		// the string is the url and create one.
+		if(typeof opts == 'string'){
+			opts = {
+				url : opts,
+				save : true,
+				defaults : false,
+				loadNow : true
+			}
+		}
+
 		var newFeed = new SprFeed({
-			url : url,
+			url : opts.url,
+			defaults : opts.defaults,
 			onLoad : function(newFeed){
 				_this.db.data.feeds.push(newFeed.getOverview());
-				_this.db.save();
-				callback(newFeed);
+				if(opts.save){
+					_this.db.save();
+				}
+				if(callback){
+					callback(newFeed);
+				}
 			}
 		});
-		newFeed.load();
+
+		if(opts.loadNow){
+			newFeed.load();
+		}
 	},
 	updateFeeds : function(callback){
 		var _this = this;
 		var i = 0;
 		var update = function(){
-			console.log('updating feed ',i);
 			var thisFeed = new SprFeed({
 				url : _this.db.data.feeds[i].feedurl,
 				cache : false,
@@ -244,6 +267,26 @@ SprFeeds.prototype = {
 		if(!feed === false) return;
 		this.db.data.feeds.splice(feed,1);
 		this.db.save();
+	},
+	loadOpml : function(opml){
+		var _this = this;
+		if(typeof opml == 'string'){
+			opml = $.parseXML(opml);
+		}
+
+		$('outline',opml).each(function(){
+			if($(this).attr('xmlUrl')){
+				_this.createFeed({
+					url : $(this).attr('xmlUrl'),
+					defaults : {
+						title : $(this).attr('title')
+					}
+				});
+			}
+
+		});
+		_this.db.save();
+		//_this.updateFeeds();
 	}
 }
 
@@ -303,6 +346,26 @@ window.onload = function(){
 		return false;
 	});
 
+	// Read OPML
+	$('#opml').change(function(e){
+		var file = e.originalEvent.target.files[0];
+		var reader = new FileReader();
+		reader.onload = function(e){
+			var opml = e.target.result;
+			$('#importFeeds').modal('hide');
+
+			// Leave a little delay to let the animation be buttery.
+			window.setTimeout(function(){
+				feeds.loadOpml(opml);
+			},500);
+		}
+		reader.readAsText(file);
+
+		return false;
+	});
+
+
+	/* Mark as read functionality */
 	var getTopWithOffsets = function($newTarget){
 		return $newTarget.offset().top +
 			$('.feed').scrollTop() -

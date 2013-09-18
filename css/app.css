@@ -14,17 +14,13 @@ body{
 
 .floaty.ui > .feed{
 	position: absolute;
-	left: 280px;
+	left: 250px;
 	right: 0;
 	bottom: 0;
 	overflow: auto;
 	top: 2.66em;
 
-	padding-top:;
-}
-
-.floaty.ui h2.ui.header{
-	margin-top:1rem;
+	padding:1rem 1.5rem;
 }
 
 .floaty.ui .sidebar{
@@ -34,6 +30,7 @@ body{
 	bottom:0;
 	width:250px;
 	background:#f8f8f8;
+	overflow:auto;
 }
 
 .ui.modal > .content{

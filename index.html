@@ -16,11 +16,14 @@
         <span class="header item">
             Superfeed
         </span>
-        <a class="item showmodal" data-modal="#addfeed">
+        <a class="item showmodal" data-modal="#addFeed">
             <i class="add icon"></i> Add Content
         </a>
         <a class="item superfeeds action" data-action="updateFeeds">
             <i class="clockwise icon"></i> Update
+        </a>
+        <a class="item showmodal" data-modal="#importFeeds">
+            Import Feeds
         </a>
 
         <div class="right menu">
@@ -42,7 +45,7 @@
         </div>
     </div>
 
-    <div id="addfeed" class="ui modal">
+    <div id="addFeed" class="ui modal">
         <i class="close icon"></i>
         <div class="header">
             Add a feed
@@ -50,6 +53,21 @@
         <div class="content">
                 <p>Add a feed by pasting the address here.</p>
                 <input type="text">
+        </div>
+        <div class="actions">
+            <a class="ui secondary button">Cancel</a>
+            <a class="ui primary button">OK</a>
+        </div>
+    </div>
+
+    <div id="importFeeds" class="ui modal">
+        <i class="close icon"></i>
+        <div class="header">
+            Import OPML
+        </div>
+        <div class="content">
+                <p>Import an OPML feed list from another program.</p>
+                <input type="file" id="opml" name="opml">
         </div>
         <div class="actions">
             <a class="ui secondary button">Cancel</a>
