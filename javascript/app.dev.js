@@ -1901,7 +1901,7 @@ SprFeed.prototype = {
 	getUnreadCount : function(){
 		var count = 0;
 		for(var i=0;i<this.feed.entries.length;i++){
-			if(!newFeed.entries[i].read){
+			if(!this.feed.entries[i].read){
 				count++;
 			}
 		}
@@ -1920,10 +1920,16 @@ SprFeed.prototype = {
 		entry[flag] = !entry[flag];
 		this.save();
 	},
+	/**
+	 * Mark a feed as read
+	 * @param  {string} id The entry ID (usually a permalink)
+	 */
 	markRead : function(id){
 		var entry = this._getEntryByID(id);
-		entry.read = true;
-		this.save();
+		if(!entry.read){
+			entry.read = true;
+			this.save();
+		}
 	}
 };
 
@@ -1973,7 +1979,7 @@ SprFeeds.prototype = {
 		var _this = this;
 		var newFeed = new SprFeed({
 			url : url,
-			onLoad : function(){
+			onLoad : function(newFeed){
 				_this.db.data.feeds.push(newFeed.getOverview());
 				_this.db.save();
 				callback(newFeed);
@@ -2034,10 +2040,28 @@ SprFeeds.prototype = {
 }
 
 window.onload = function(){
-	var animateSpeed = 100;
-	window.onresize();
 
+	/**
+	 * How fast do animations comlpete. (Milliseconds.)
+	 * @type {Number}
+	 */
+	var animateSpeed = 100;
+
+	/**
+	 * The amount of scroll buffer to apply when jumping
+	 * to feeds etc. This could probably be acheived with
+	 * CSS padding.
+	 * @type {Number}
+	 */
+	var scrollBuffer = 15;
+
+	/**
+	 * The main feed data source and magic happener.
+	 * @type {SprFeeds}
+	 */
 	var feeds = new SprFeeds();
+
+	window.onresize();
 
 	$('.showmodal').click(function(){
 		var target = $(this).data('modal');
@@ -2071,7 +2095,11 @@ window.onload = function(){
 		return false;
 	});
 
-
+	var getTopWithOffsets = function($newTarget){
+		return $newTarget.offset().top +
+			$('.feed').scrollTop() -
+			$('.feed').offset().top;
+	}
 
 	Mousetrap.bind(['j','k'],function(e,key){
 
@@ -2093,17 +2121,27 @@ window.onload = function(){
 			articleCurrent--;
 		}
 
-		var $newTarget = $('.entries .entry').eq(articleCurrent);
 		$('.feed').animate({
-			scrollTop : $newTarget.offset().top +
-				$('.feed').scrollTop() -
-				$('.feed').offset().top
+			scrollTop : getTopWithOffsets($('.entries .entry').eq(articleCurrent)) - scrollBuffer
 		},animateSpeed);
-		$newTarget.find('.read').addClass('active');
-		console.log('scrolling to ',$newTarget.find('h3').text(),articleCurrent);
+
 		feeds.feed.articleCurrent = articleCurrent;
 
 	});
+
+	$('.feed').scroll(function(){
+		var scrollTop = $(this).scrollTop();
+
+		// This could get slow for large feeds. I'm not sure
+		// if I want to equate list index with feed index yet.
+		$('.entry',this).each(function(i){
+			if(scrollTop >= getTopWithOffsets($(this)) - scrollBuffer*2){
+				feeds.feed.markRead($(this).data('id'));
+				feeds.feed.articleCurrent = i;
+				$('.entries .entry .read').eq(i).addClass('active');
+			}
+		})
+	})
 }
 
 window.onresize = function(){
