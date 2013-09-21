@@ -1,7 +1,11 @@
 <ul>
 {{#feeds}}
 <li>
-	<a class="superfeeds action" data-action="loadFeed" data-p1="{{feedurl}}">{{title}}</a>
+	<a class="superfeeds action" data-action="loadFeed" data-p1="{{feedurl}}">
+
+	<span class="title">{{title}}</span>
+	<span class="unread">{{unread}}</span>
+	</a>
 </li>
 {{/feeds}}
 </ul>

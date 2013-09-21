@@ -118,11 +118,15 @@ function program1(depth0,data) {
   if (stack1 = helpers.feedurl) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
   else { stack1 = depth0.feedurl; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
   buffer += escapeExpression(stack1)
-    + "\">";
+    + "\">\n\n	<span class=\"title\">";
   if (stack1 = helpers.title) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
   else { stack1 = depth0.title; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
   buffer += escapeExpression(stack1)
-    + "</a>\n</li>\n";
+    + "</span>\n	<span class=\"unread\">";
+  if (stack1 = helpers.unread) { stack1 = stack1.call(depth0, {hash:{},data:data}); }
+  else { stack1 = depth0.unread; stack1 = typeof stack1 === functionType ? stack1.apply(depth0) : stack1; }
+  buffer += escapeExpression(stack1)
+    + "</span>\n	</a>\n</li>\n";
   return buffer;
   }
 

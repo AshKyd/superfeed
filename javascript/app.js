@@ -1,19 +1,22 @@
 "use strict";
 var SprFeed = function(opts){
-	this.opts = $.extend(this.opts,opts);
+	var _this = this;
+	this.opts = $.extend({},this.defaults,opts);
 
 	this.db = new SprDb({
 		name : 'SprFeed'+opts.url,
 		schema : {
 			feed : opts.defaults
+		},
+		onLoad : function(){
+			_this.loadFromCache();
 		}
 	});
-	this.loadFromCache();
 	this.articleCurrent=0;
 }
 
 SprFeed.prototype = {
-	opts : {
+	defaults : {
 		useProxy : true,
 		proxyUrl : 'http://assets.kyd.com.au/jsonproxy/?uri={url}'
 	},
@@ -103,7 +106,9 @@ SprFeed.prototype = {
 			title : this.feed.title,
 			link : this.feed.link,
 			feedurl : this.opts.url,
-			unread : this.getUnreadCount()
+			unread : this.getUnreadCount(),
+			updateTime : this.feed.updatetime,
+			updatelength : this.feed.updatelength
 		}
 	},
 	getUnreadCount : function(){
@@ -147,38 +152,65 @@ SprFeed.prototype = {
 
 var SprDb = function(opts){
 	this.opts = opts;
-	this.open();
+	this.open(this.opts.onLoad);
 }
 SprDb.prototype = {
-	open : function(){
-		var data = localStorage[this.opts.name];
-		try{
-			this.data = JSON.parse(data);
-		}catch(e){
-			this.data = $.extend({},this.opts.schema);
-		}
+	open : function(callback){
+		var _this = this;
+		Lawnchair(function(){
+			this.get(_this.opts.name,function(data){
+				if(!!data && data.value){
+					data = data.value;
+				} else {
+					data = $.extend({},_this.opts.schema);
+				}
+
+				_this.data = data;
+
+				if(callback) {
+					callback(data);
+				} else {
+					this.opts.onLoad && this.opts.onLoad(data);
+				}
+			})
+		})
 	},
 	save : function(){
-		localStorage[this.opts.name] = JSON.stringify(this.data);
-		this.opts.onPostSave && this.opts.onPostSave(this);
+		var _this = this;
+		Lawnchair(function(){
+			this.save({key:_this.opts.name,value:_this.data},function(){
+				_this.opts.onPostSave && _this.opts.onPostSave(_this);
+			});
+		})
 	}
 
 }
 
 var SprFeeds = function(){
+	var _this = this;
 	this.db = new SprDb({
 		name : 'SprFeeds',
-		schema : {
-			feeds : []
-		},
+		schema : this.devaultSchema,
 		onPostSave : function(db){
+			if(db.data === null){
+				return;
+			}
+			console.log(db.data);
 			$('.sidebar').empty().append(JST["templates/sidebar.hbs"](db.data));
+		},
+		onLoad : function(){
+			if(!_this.db.data || !_this.db.data.feeds || !_this.db.data.feeds.push){
+				_this.db.data = _this.defaultSchema;
+			}
+			_this.db.opts.onPostSave(_this.db);
 		}
 	});
-	this.db.opts.onPostSave(this.db);
 }
 
 SprFeeds.prototype = {
+	defaultSchema : {
+			feeds : []
+		},
 	_getFeedByUrl : function(url){
 		for(var i=0; i < this.db.data.feeds.length; i++){
 			if(this.db.data.feeds[i].feedurl == url){
@@ -205,7 +237,8 @@ SprFeeds.prototype = {
 			url : opts.url,
 			defaults : opts.defaults,
 			onLoad : function(newFeed){
-				_this.db.data.feeds.push(newFeed.getOverview());
+				var overview = newFeed.getOverview();
+				_this.db.data.feeds.push(overview);
 				if(opts.save){
 					_this.db.save();
 				}
@@ -223,23 +256,19 @@ SprFeeds.prototype = {
 		var _this = this;
 		var i = 0;
 		var update = function(){
-			var thisFeed = new SprFeed({
-				url : _this.db.data.feeds[i].feedurl,
-				cache : false,
-				onLoad : function(feed){
-					i++;
-					if(i<_this.db.data.feeds.length){
-						update();
-					} else if(callback) {
-						callback();
-					}
+			_this.loadFeed(_this.db.data.feeds[i].feedurl,function(){
+				i++;
+				if(i<_this.db.data.feeds.length){
+					update();
+				} else if(callback) {
+					_this.save();
+					callback && callback();
 				}
 			});
-			thisFeed.load();
 		}
 		update();
 	},
-	loadFeed : function(url){
+	loadFeed : function(url,callback){
 		var _this = this;
 		var feed = _this._getFeedByUrl(url);
 		if(feed === false) return;
@@ -250,13 +279,13 @@ SprFeeds.prototype = {
 		var thisRef = _this.db.data.feeds[feed];
 		var thisFeed = new SprFeed({
 			url : thisRef.feedurl,
-			onLoad : function(feed){
+			onLoad : function(){
 				$feed
 					.empty()
-					.append(JST["templates/feed.hbs"](feed));
-				thisRef.updatetime = feed.feed.updatetime;
-				thisRef.updatelength = feed.feed.updatelength;
+					.append(JST["templates/feed.hbs"](thisFeed));
+				_this.db.data.feeds[feed] = thisFeed.getOverview();
 				_this.db.save();
+				callback && callback();
 			}
 		});
 		thisFeed.load();
@@ -311,6 +340,7 @@ window.onload = function(){
 	 * @type {SprFeeds}
 	 */
 	var feeds = new SprFeeds();
+	window.feeds = feeds; //FIXME
 
 	window.onresize();
 
@@ -320,7 +350,7 @@ window.onload = function(){
 		return true;
 	});
 
-	$('#addfeed .primary').click(function(){
+	$('#addFeed .primary').click(function(){
 		var url = $(this).closest('.ui.modal').find('input[type="text"]').val();
 		var feed = feeds.createFeed(url,function(){
 			feeds.loadFeed(url);
@@ -392,8 +422,10 @@ window.onload = function(){
 			articleCurrent--;
 		}
 
+
+		var scrollTo = articleCurrent == 0 ? 0 : getTopWithOffsets($('.entries .entry').eq(articleCurrent)) - scrollBuffer;
 		$('.feed').animate({
-			scrollTop : getTopWithOffsets($('.entries .entry').eq(articleCurrent)) - scrollBuffer
+			scrollTop : scrollTo
 		},animateSpeed);
 
 		feeds.feed.articleCurrent = articleCurrent;

@@ -3,6 +3,7 @@ module.exports = function(grunt) {
         concat: {
             dev: {
                 src: [
+                    "javascript/lawnchair/*.js",
                     "javascript/handlebars.runtime.js",
                     "javascript/templates.compiled.js",
                     "javascript/html-sanitiser.js",
