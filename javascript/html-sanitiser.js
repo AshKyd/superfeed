@@ -28,6 +28,8 @@
 	// rules based on
 	// https://github.com/rails/rails/blob/master/actionpack/lib/action_controller/vendor/html-scanner/html/sanitizer.rb
 	exports.sanitiseHTML = function (html, options) {
+
+
 	    if (html == null || !html.length) return "";
 	    var options = options || {}
 	    ,   allowedElements = mapArray(options.allowedElements || exports.allowedElements)

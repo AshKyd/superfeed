@@ -1,0 +1,20 @@
+{
+  "name": "SuperFeed",
+  "description": "A local RSS feed reader, for those of distinguished taste.",
+  "version": "0.90",
+  "app": {
+    "background": {
+      "scripts": ["chrome/background.js"]
+    }
+  },
+  "icons": { "16": "images/icon-16.png", "128": "images/icon-128.png" },
+  "permissions":[
+  	"storage",
+  	"unlimitedStorage",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "sandbox":[
+  	"index.html"
+  ]
+}

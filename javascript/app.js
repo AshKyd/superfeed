@@ -17,7 +17,7 @@ var SprFeed = function(opts){
 
 SprFeed.prototype = {
 	defaults : {
-		useProxy : true,
+		useProxy : false,
 		proxyUrl : 'http://assets.kyd.com.au/jsonproxy/?uri={url}'
 	},
 	getRemoteUrl : function(url,callback){
@@ -27,6 +27,7 @@ SprFeed.prototype = {
 			ajaxOpts.dataType = 'jsonp';
 		} else {
 			ajaxOpts.url = url;
+			ajaxOpts.dataType = 'text';
 		}
 
 		ajaxOpts.success = function(data){
@@ -76,7 +77,7 @@ SprFeed.prototype = {
 		var _this = this;
 
 		var startTime = Date.now();
-		this.getRemoteUrl(this.opts.url,function(data){
+		this.getRemoteUrl(_this.opts.url,function(data){
 			var newFeed = new JFeed(data);
 
 			for(var i=0;i<newFeed.entries.length;i++){
@@ -157,31 +158,27 @@ var SprDb = function(opts){
 SprDb.prototype = {
 	open : function(callback){
 		var _this = this;
-		Lawnchair(function(){
-			this.get(_this.opts.name,function(data){
-				if(!!data && data.value){
-					data = data.value;
-				} else {
-					data = $.extend({},_this.opts.schema);
-				}
+		localforage.getItem(_this.opts.name,function(data){
+			if(!!data && data.value){
+				data = data.value;
+			} else {
+				data = $.extend({},_this.opts.schema,data);
+			}
 
-				_this.data = data;
+			_this.data = data;
 
-				if(callback) {
-					callback(data);
-				} else {
-					this.opts.onLoad && this.opts.onLoad(data);
-				}
-			})
+			if(callback) {
+				callback(data);
+			} else {
+				this.opts.onLoad && this.opts.onLoad(data);
+			}
 		})
 	},
 	save : function(){
 		var _this = this;
-		Lawnchair(function(){
-			this.save({key:_this.opts.name,value:_this.data},function(){
-				_this.opts.onPostSave && _this.opts.onPostSave(_this);
-			});
-		})
+		localforage.setItem(_this.opts.name,_this.data,function(){
+			_this.opts.onPostSave && _this.opts.onPostSave(_this);
+		});
 	}
 
 }
@@ -195,11 +192,11 @@ var SprFeeds = function(){
 			if(db.data === null){
 				return;
 			}
-			console.log(db.data);
 			$('.sidebar').empty().append(JST["templates/sidebar.hbs"](db.data));
 		},
 		onLoad : function(){
 			if(!_this.db.data || !_this.db.data.feeds || !_this.db.data.feeds.push){
+				debugger;
 				_this.db.data = _this.defaultSchema;
 			}
 			_this.db.opts.onPostSave(_this.db);
